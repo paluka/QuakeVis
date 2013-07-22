@@ -46,7 +46,7 @@ function createSliders() {
         maxSlider = new Slider(document.getElementById("slider-2"),
             document.getElementById("slider-input-2"));
 
-    minSlider.setMinimum(0);
+    minSlider.setMinimum(1);
     minSlider.setMaximum(100);
     minSlider.setValue(document.getElementById("minMag").innerHTML * 10);
     minSlider.onchange = function () {
@@ -60,7 +60,7 @@ function createSliders() {
         }
     };
 
-    maxSlider.setMinimum(0);
+    maxSlider.setMinimum(1);
     maxSlider.setMaximum(100);
     maxSlider.setValue(document.getElementById("maxMag").innerHTML * 10);
     maxSlider.onchange = function () {
@@ -206,14 +206,24 @@ function createSVG(data) {
         currentY1 = height / 2,
         currentY2 = height / 2,
         magnMult,
-        mult = (10 - minMagn)*(minMagn*3);
+        mult = 80; //(10 - minMagn)*(15);
+    
+    
 
     values = [];
 
 
     $.each(data.features.reverse(), function (index) {
         var magn = data.features[index].properties.mag;
-        magnMult = Math.round((magn - (minMagn - 1)) * mult);
+        
+        if (minMagn < 1) {
+            magnMult = Math.round((magn - minMagn) * mult);
+        } else {
+            magnMult = Math.round((magn - (minMagn - 1)) * mult);
+        }
+        
+        
+        
         values.push(magn.toFixed(1));
         console.log(magn.toFixed(1));
         if (i) {
@@ -284,6 +294,7 @@ function drawSegments(pathTop, pathBottom){
         for(i = 0; i < pathVis.length; i++){ 
             pathVis[i].unmousemove(pathVis[i].mMoveHandler);
             pathVis[i].unmouseout(pathVis[i].mOutHandler);
+            pathVis[i].attr({'fill-opacity': 0, 'stroke-opacity': 0});
             
         }
     }
