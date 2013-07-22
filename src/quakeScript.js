@@ -3,8 +3,8 @@ var width = 900,
     minMagn,
     maxMagn,
     rightSpace = 7, // curve passes width boundary
-    topTxt = null,
-    bottomTxt = null,
+    popUpTxt = null,
+    popUpRect = null,
     topVis,
     bottomVis,
     mult,
@@ -124,15 +124,10 @@ function setup() {
             ed.setMonth((parseInt(formated.substr(5, 2)) - 1), formated.substr(8, 2));
 
             var bd = new Date();
-            /*if (startDate == '') {
-                bd.setFullYear(bd.getFullYear() - 1);
-                console.log(bd);
-            } else {*/
-            
-                bd.setFullYear($('#begDate').val().substr(0, 4));
-                bd.setMonth((parseInt($('#begDate').val().substr(5, 2)) - 1));
-                bd.setDate($('#begDate').val().substr(8, 2));
-           // }
+            bd.setFullYear($('#begDate').val().substr(0, 4));
+            bd.setMonth((parseInt($('#begDate').val().substr(5, 2)) - 1));
+            bd.setDate($('#begDate').val().substr(8, 2));
+           
             if (checkDates(bd, ed)) {
                 $('#endDate').val(formated);
                 endDate = 'endtime=' + formated + time + '&';
@@ -184,7 +179,7 @@ function startVis() {
         if (count > 0) {
             spacing = width / count;
             createSVG(data);
-            console.log(data.features.length);
+            console.log('Number of results: ' + data.features.length);
         } else {
             alert('Your requested query has zero results. Change the options and try again.');
             spinner.stop();
@@ -198,105 +193,107 @@ function startVis() {
 
 
 function createSVG(data) {
-    //if(Raphael.svg){
-    var i = 0,
-        pathTop = '',
-        pathBottom = '',
-        currentX = 0,
-        currentY1 = height / 2,
-        currentY2 = height / 2,
-        magnMult,
-        mult = 80; //(10 - minMagn)*(15);
+    if(Raphael.svg){
+        var i = 0,
+            pathTop = '',
+            pathBottom = '',
+            currentX = 0,
+            currentY1 = height / 2,
+            currentY2 = height / 2,
+            magnMult,
+            mult = 80; //(10 - minMagn)*(15);
+        
+        
+    
+        values = [];
     
     
-
-    values = [];
-
-
-    $.each(data.features.reverse(), function (index) {
-        var magn = data.features[index].properties.mag;
-        
-        if (minMagn < 1) {
-            magnMult = Math.round((magn - minMagn) * mult);
-        } else {
-            magnMult = Math.round((magn - (minMagn - 1)) * mult);
-        }
-        
-        
-        
-        values.push(magn.toFixed(1));
-        console.log(magn.toFixed(1));
+        $.each(data.features.reverse(), function (index) {
+            var magn = data.features[index].properties.mag,
+                place = data.features[index].properties.place,
+                time = data.features[index].properties.time;
+            
+            if (minMagn < 1) {
+                magnMult = Math.round((magn - minMagn) * mult);
+            } else {
+                magnMult = Math.round((magn - (minMagn - 1)) * mult);
+            }
+            
+            
+            
+            values.push({mag: magn.toFixed(1), loc: place, date: time});
+    
+            if (i) {
+                currentX += spacing;
+    
+                currentY1 = height / 2 - magnMult;
+                pathTop += ',' + [currentX, currentY1];
+    
+                currentY2 = height / 2 + magnMult;
+                pathBottom += ',' + [currentX, currentY2];
+            } else if (i == 0) {
+                pathTop += 'M' + [currentX, height / 2 - magnMult] + 'R';
+                pathBottom += 'M' + [currentX, height / 2 + magnMult] + 'R';
+            }
+    
+            i++;
+    
+    
+    
+        });
+    
+    
+    
         if (i) {
-            currentX += spacing;
-
+            currentX += spacing - rightSpace;
+    
             currentY1 = height / 2 - magnMult;
             pathTop += ',' + [currentX, currentY1];
-
+    
             currentY2 = height / 2 + magnMult;
             pathBottom += ',' + [currentX, currentY2];
-        } else if (i == 0) {
-            pathTop += 'M' + [currentX, height / 2 - magnMult] + 'R';
-            pathBottom += 'M' + [currentX, height / 2 + magnMult] + 'R';
-        }/* else {
-            console.log("a");
-            pathTop += 'M' + [spacing, height / 2 - magnMult] + 'R';
-            pathBottom += 'M' + [spacing, height / 2 + magnMult] + 'R';
-        }*/
-
-        i++;
-
-
-
-    });
-
-
-
-    if (i) {
-        currentX += spacing - rightSpace;
-
-        currentY1 = height / 2 - magnMult;
-        pathTop += ',' + [currentX, currentY1];
-
-        currentY2 = height / 2 + magnMult;
-        pathBottom += ',' + [currentX, currentY2];
-    } else {
-        pathTop += 'M' + [spacing - rightSpace, height / 2 - magnMult] + 'R';
-        pathBottom += 'M' + [spacing - rightSpace, height / 2 + magnMult] + 'R';
-    }
-
-    spinner.stop();
-
-    drawTop(pathTop);
-    //addTopHandler();
-    drawBottom(pathBottom);
-    //addBottomHandler();
-    drawSegments(pathTop, pathBottom);
-    started = true;
-    numSvgs++;
+        } else {
+            pathTop += 'M' + [spacing - rightSpace, height / 2 - magnMult] + 'R';
+            pathBottom += 'M' + [spacing - rightSpace, height / 2 + magnMult] + 'R';
+        }
     
-    // draw line
-    // svg.path('M0,' + height/2 + ' L' + width + ',' + height/2).attr({stroke: 'black', 'stroke-width': 2, opacity: 1.0});
+        spinner.stop();
+    
+        drawTop(pathTop);
+        drawBottom(pathBottom);
+        drawSegments(pathTop, pathBottom);
+        started = true;
+        numSvgs++;
+    
 
 
 
-    //} else {
-    // alert('Your browser does not support SVG. Try using Google Chrome.');
-    //}
+    } else {
+        alert('Your browser does not support SVG. Try using Google Chrome.');
+    }
 }
 
-function drawSegments(pathTop, pathBottom){
+function drawSegments(pathTop, pathBottom) {
     var pathSegTop = Raphael.parsePathString(pathTop);
     var pathSegBottom = Raphael.parsePathString(pathBottom);
     var i, index = 0, path = [];
    
     
-    if(started){
-        for(i = 0; i < pathVis.length; i++){ 
+    if (started) {
+        for (i = 0; i < pathVis.length; i++) { 
             pathVis[i].unmousemove(pathVis[i].mMoveHandler);
             pathVis[i].unmouseout(pathVis[i].mOutHandler);
+            pathVis[i].untouchmove(pathVis[i].mMoveHandler);
+            pathVis[i].untouchend(pathVis[i].mOutHandler);
+            pathVis[i].untouchcancel(pathVis[i].mOutHandler);
             pathVis[i].attr({'fill-opacity': 0, 'stroke-opacity': 0});
             
+            
         }
+        
+        popUpRect.remove();
+        popUpTxt.remove();
+        popUpTxt = null;
     }
     
     
@@ -333,13 +330,10 @@ function drawSegments(pathTop, pathBottom){
             path: path[index]
             
         });
-        
-        
+                
         
         pathVis[index].mMoveHandler = function(e) {
-            //this.toFront();
             this.attr({'fill-opacity': 1, 'stroke-opacity': 1});
-            //pathVis[tempI].show();
             
             
             var xOffset = getOffset(document.getElementById('svgTarget')).left,
@@ -347,61 +341,94 @@ function drawSegments(pathTop, pathBottom){
                 mouseX = e.pageX - document.body.scrollLeft,
                 mouseY = e.pageY - document.body.scrollTop,
                 x = mouseX - xOffset,
-                y = mouseY - yOffset - 50,
+                y = mouseY - yOffset,
                 text = '',
-                i,
-                xPos = x,
-                yPos = y;
+                i;
+                
 
             for (i = 0; i < count; i++) {
                 if (x >= (spacing * i - spacing/4) && x < (spacing * (i + 1) - spacing/4)) {
-                    text = values[i] + '\n Magnitude';
+                    var quakeDate = new Date();
+                    quakeDate.setTime(values[i].date);
+                    
+                    text = values[i].mag + ' Magnitude\n' +
+                           values[i].loc + '\n' +
+                           quakeDate.toDateString();
                     break;
                 }
         
             }
             
-            var ocOffset = 40;
-            
-            if(x < ocOffset){
-             xPos = x + ocOffset;   
-            } else if(x > width - ocOffset){
-             xPos = x - ocOffset;
                 
-            }
-                
-            if(y < ocOffset){
-             yPos = y + ocOffset*3;   
-            }
-            
     
-            if (topTxt === null) {
-                topTxt = svg.text(xPos, yPos, text).attr({
+            var rectOffsetX = 10,
+                rectOffsetY = 10;
+            
+            if (popUpTxt === null) {
+                popUpTxt = svg.text(x, y, text).attr({
                     'font-size': 20
                     
                 });
+                
+               
+                popUpRect = svg.rect(x, y, 0, 0, 10);
             } else {
-                topTxt.attr({
+
+                popUpTxt.attr({
                     text: text,
-                    x: xPos,
-                    y: yPos,
+                    x: x,
+                    y: y,
                 });
+                
+                
+            }
+            
+            var bbox = popUpTxt.getBBox(false);
+            //x += bbox.width/2 + rectOffsetX*4;
+            
+            if (x > width - bbox.width/2 - rectOffsetX*4) {
+                x -= (bbox.width/2 + rectOffsetX*4);   
+            } else if (x < bbox.width/2 + rectOffsetX*4){
+                x += (bbox.width/2 + rectOffsetX*4);  
+            }
+            
+            y += bbox.height*2;
+            
+            if(y > height - bbox.height - rectOffsetY){
+             y -= bbox.height*4;   
+            }
+            
+            popUpTxt.attr({
+                x: x,
+                y: y,
+            });
+            
+            if(text == ''){
+                popUpRect.attr({width: 0, height: 0, fill: 'none', stroke: 'none'});
+            } else {
+                popUpRect.attr({x: x - bbox.width/2 - rectOffsetX, y: y - bbox.height/2 - rectOffsetY, width: bbox.width + rectOffsetX*2, height: bbox.height + rectOffsetY*2, fill: '#C1F0F6', 'fill-opacity': 0.5, stroke: '#C1F0F6', 'stroke-opacity': 1, 'stroke-width': 5});
             }
     
-            topTxt.toFront();
+            popUpRect.toFront();
+            popUpTxt.toFront();
         };
         
         pathVis[index].mOutHandler = function mouseOutHandler(e) {
             this.attr({'fill-opacity': 0, 'stroke-opacity': 0});
                         
-            topTxt.attr({
+            popUpTxt.attr({
                 text: ''
             });
+            
+            popUpRect.attr({width: 0, height: 0, fill: 'none', stroke: 'none'});
         };
         
         
         pathVis[index].mousemove(pathVis[index].mMoveHandler);        
         pathVis[index].mouseout(pathVis[index].mOutHandler);
+        pathVis[index].touchmove(pathVis[index].mMoveHandler);        
+        pathVis[index].touchend(pathVis[index].mOutHandler);
+        pathVis[index].touchcancel(pathVis[index].mOutHandler);
         
         index++;
         
@@ -412,8 +439,6 @@ function drawSegments(pathTop, pathBottom){
 }
 
 function drawTop(pathTop) {
-    
-    //svg.path(pathTop).attr({fill: 'none', stroke: 'red', 'stroke-width': 4, 'stroke-linecap': 'round'});
     pathTop += 'L' + (width - rightSpace) + ',' + height / 2 + 'L0,' + height / 2 + 'Z';
 
 
@@ -439,59 +464,9 @@ function drawTop(pathTop) {
 
 }
 
-function addTopHandler() {
-    topVis.mousemove(function (e) {
-        var xOffset = getOffset(document.getElementById('svgTarget')).left,
-            yOffset = getOffset(document.getElementById('svgTarget')).top,
-            mouseX = e.pageX - document.body.scrollLeft,
-            mouseY = e.pageY - document.body.scrollTop,
-            x = mouseX - xOffset,
-            y = mouseY - yOffset - 20,
-            text,
-            i;
-
-        for (i = 0; i < count; i++) {
-            if (x >= (spacing * i - spacing / 4) && x <= (spacing * (i + 1) - spacing / 4)) {
-                text = values[i] + ' Magnitude';
-                break;
-            }
-
-        }
-
-        if (topTxt === null) {
-            topTxt = svg.text(x, y, text).attr({
-                'font-size': 20
-                
-            });
-        } else {
-            topTxt.attr({
-                text: text,
-                x: x,
-                y: y,
-                //'font-size': 20
-            });
-        }
-
-        topTxt.toFront();
-        
-
-    });
-
-    topVis.mouseout(function (e) {
-        topTxt.attr({
-            text: ''
-        });
-    });
-}
-
 function drawBottom(pathBottom) {
-    // bottom
-    //svg.path(pathBottom).attr({fill: 'none', stroke: 'red', 'stroke-width': 4, 'stroke-linecap': 'round'});
 
-    pathBottom += 'L' + (width - rightSpace) + ',' + height / 2 + 'L0,' + height / 2 + 'Z'
-
-    //bottomVis = svg.path(pathBottom ).attr({fill: 'red', stroke: 'red'});
-
+    pathBottom += 'L' + (width - rightSpace) + ',' + height / 2 + 'L0,' + height / 2 + 'Z';
 
     if (started) {
         var time = 500;
@@ -512,48 +487,6 @@ function drawBottom(pathBottom) {
         });
     }
 
-}
-
-function addBottomHandler() {
-    bottomVis.mousemove(function (e) {
-        var xOffset = getOffset(document.getElementById('svgTarget')).left,
-            yOffset = getOffset(document.getElementById('svgTarget')).top,
-            mouseX = e.pageX - document.body.scrollLeft,
-            mouseY = e.pageY - document.body.scrollTop,
-            x = mouseX - xOffset,
-            y = mouseY - yOffset - 20,
-            text;
-
-        for (var i = 0; i < count; i++) {
-            if (x >= (spacing * i - spacing / 4) && x <= (spacing * (i + 1) - spacing / 4)) {
-                text = values[i] + ' Magnitude';
-                break;
-            }
-
-        }
-
-        if (bottomTxt === null) {
-            bottomTxt = svg.text(x, y, text).attr({
-                'font-size': 20
-            });
-        } else {
-            bottomTxt.attr({
-                text: text,
-                x: x,
-                y: y,
-                'font-size': 20
-            });
-        }
-
-
-
-    });
-
-    bottomVis.mouseout(function (e) {
-        bottomTxt.attr({
-            text: ''
-        });
-    });
 }
 
 function startSpin() {

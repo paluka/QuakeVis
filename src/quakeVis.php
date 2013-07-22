@@ -42,7 +42,7 @@
     <body onload="setup();">
         <div class="container">
             <?php include( '../../includes/header.php'); ?>
-            <div style="height: 250px"></div>
+            <div style="height: 200px"></div>
             <div style="text-align: center">
                 
                 <h3>QuakeVis: Visualization of Past Earthquakes on Earth</h3>
