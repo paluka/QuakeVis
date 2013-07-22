@@ -386,9 +386,9 @@ function drawSegments(pathTop, pathBottom) {
             var bbox = popUpTxt.getBBox(false);
             //x += bbox.width/2 + rectOffsetX*4;
             
-            if (x > width - bbox.width/2 - rectOffsetX*4) {
+            if (x > 5*width/8) { // - bbox.width/2 - rectOffsetX*4) {
                 x -= (bbox.width/2 + rectOffsetX*4);   
-            } else if (x < bbox.width/2 + rectOffsetX*4){
+            } else if (x < 3*width/8) { //bbox.width/2 + rectOffsetX*4){
                 x += (bbox.width/2 + rectOffsetX*4);  
             }
             
