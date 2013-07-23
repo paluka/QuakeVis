@@ -221,7 +221,8 @@ function createSVG(data) {
         $.each(data.features.reverse(), function (index) {
             var magn = data.features[index].properties.mag,
                 place = data.features[index].properties.place,
-                time = data.features[index].properties.time;
+                time = data.features[index].properties.time,
+                j;
             
             //if (minMagn < 1) {
             //    magnMult = Math.round((magn - minMagn) * magn*mult);
@@ -233,17 +234,19 @@ function createSVG(data) {
             
             values.push({mag: magn.toFixed(1), loc: place, date: time});
     
-            if (i) {
-                currentX += spacing;
-    
-                currentY1 = height / 2 - magnMult;
-                pathTop += ',' + [currentX, currentY1];
-    
-                currentY2 = height / 2 + magnMult;
-                pathBottom += ',' + [currentX, currentY2];
-            } else if (i == 0) {
+            if (i == 0) {
                 pathTop += 'M' + [currentX, height / 2 - magnMult] + 'R';
                 pathBottom += 'M' + [currentX, height / 2 + magnMult] + 'R';
+            } else {
+                for (j = 0; j < 2; j++) {
+                    currentX += spacing/2;
+        
+                    currentY1 = height / 2 - magnMult;
+                    pathTop += ',' + [currentX, currentY1];
+        
+                    currentY2 = height / 2 + magnMult;
+                    pathBottom += ',' + [currentX, currentY2];
+                }
             }
     
             i++;
@@ -254,18 +257,14 @@ function createSVG(data) {
     
     
     
-        if (i) {
-            currentX += spacing - rightSpace;
+        currentX += spacing - rightSpace;
     
-            currentY1 = height / 2 - magnMult;
-            pathTop += ',' + [currentX, currentY1];
+        currentY1 = height / 2 - magnMult;
+        pathTop += ',' + [currentX, currentY1];
     
-            currentY2 = height / 2 + magnMult;
-            pathBottom += ',' + [currentX, currentY2];
-        } else {
-            pathTop += 'M' + [spacing - rightSpace, height / 2 - magnMult] + 'R';
-            pathBottom += 'M' + [spacing - rightSpace, height / 2 + magnMult] + 'R';
-        }
+        currentY2 = height / 2 + magnMult;
+        pathBottom += ',' + [currentX, currentY2];
+       
     
         spinner.stop();
     
@@ -309,23 +308,22 @@ function drawSegments(pathTop, pathBottom) {
     }
     
     
-    for(i = 0; i < pathSegTop[1].length; i = i + 4){
+    for(i = 0; i < pathSegTop[1].length - 2; i = i + 4){
         if(i == 0){
-            path[index] = 'M' + [pathSegBottom[0][1], pathSegBottom[0][2]] + ',L' + [pathSegTop[0][1], pathSegTop[0][2]] + 'R' + ',' + [pathSegTop[1][1], pathSegTop[1][2]] + ',' + [pathSegTop[1][3], pathSegTop[1][4]];
+            path[index] = 'M' + [pathSegBottom[0][1], pathSegBottom[0][2]] + ',L' + [pathSegTop[0][1], pathSegTop[0][2]] + 'R' + ',' + [pathSegTop[1][1], pathSegTop[1][2]] + ',' + [pathSegTop[1][1], pathSegTop[1][2]];
             
             
             
-            path[index] += ',M' + [pathSegBottom[0][1], pathSegBottom[0][2]] + 'R,' + [pathSegBottom[1][1], pathSegBottom[1][2]] + ',' + [pathSegBottom[1][3], pathSegBottom[1][4]] + ',L' + [pathSegTop[1][3], pathSegTop[1][4]] + 'Z';
+            path[index] += ',M' + [pathSegBottom[0][1], pathSegBottom[0][2]] + 'R,' + [pathSegBottom[1][1], pathSegBottom[1][2]] + ',' + [pathSegBottom[1][1], pathSegBottom[1][2]] + ',L' + [pathSegTop[1][1], pathSegTop[1][2]] + 'Z';
+            i -= 2;
            
-            } else {
+        } else {
                 path[index] =  'M' + [pathSegBottom[1][i - 1], pathSegBottom[1][i]] + ',L' + [pathSegTop[1][i - 1], pathSegTop[1][i]] + 'R,' + [pathSegTop[1][i + 1], pathSegTop[1][i + 2]] + ',' + [pathSegTop[1][i + 3], pathSegTop[1][i + 4]];
             
             
             
             path[index] += ',M' + [pathSegBottom[1][i - 1], pathSegBottom[1][i]] + 'R,' + [pathSegBottom[1][i + 1], pathSegBottom[1][i + 2]] + ',' + [pathSegBottom[1][i + 3], pathSegBottom[1][i + 4]] + ',L' + [pathSegTop[1][i + 3], pathSegTop[1][i + 4]] + 'Z';
         } 
-        
-        
         
         
         
@@ -343,6 +341,9 @@ function drawSegments(pathTop, pathBottom) {
             
         });
                 
+        pathVis[index].mag = values[index].mag;
+        pathVis[index].loc = values[index].loc;
+        pathVis[index].date = values[index].date;
         
         pathVis[index].mMoveHandler = function(e) {
             this.attr({'fill-opacity': 1, 'stroke-opacity': 1});
@@ -358,20 +359,14 @@ function drawSegments(pathTop, pathBottom) {
                 i;
                 
 
-            for (i = 0; i < count; i++) {
-                if (x >= (spacing * i - spacing/4) && x < (spacing * (i + 1) - spacing/4)) {
-                    var quakeDate = new Date();
-                    quakeDate.setTime(values[i].date);
-                    
-                    text = values[i].mag + ' Magnitude\n' +
-                           values[i].loc + '\n' +
-                           quakeDate.toDateString();
-                    break;
-                }
-        
-            }
+            var quakeDate = new Date();
+    
+            quakeDate.setTime(this.date);
             
-                
+            text = this.mag + ' Magnitude\n' +
+                   this.loc + '\n' +
+                   quakeDate.toDateString();
+
     
             var rectOffsetX = 10,
                 rectOffsetY = 10;
