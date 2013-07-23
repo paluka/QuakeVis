@@ -12,11 +12,13 @@
         <link rel="stylesheet" type="text/css" href="../../style.css" />
         <link rel="stylesheet" type="text/css" href="plugins/datepicker/datepicker.css" />
         <link rel="stylesheet" type="text/css" href="plugins/slider/luna.css" />
-        <script src="plugins/jquery-v1.3.2.js"></script>
+        <script src="plugins/jquery-1.7.2.min.js"></script>
         <script src="quakeScript.js"></script>
         <script src="plugins/raphael-min.js"></script>
         <script src="plugins/spin.min.js"></script>
+        
         <script src="plugins/datepicker/datepicker.js"></script>
+        
         <script src="plugins/slider/range.js"></script>
         <script src="plugins/slider/slider.js"></script>
         <script src="plugins/slider/timer.js"></script>

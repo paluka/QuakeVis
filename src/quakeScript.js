@@ -46,7 +46,7 @@ function createSliders() {
         maxSlider = new Slider(document.getElementById("slider-2"),
             document.getElementById("slider-input-2"));
 
-    minSlider.setMinimum(1);
+    minSlider.setMinimum(20);
     minSlider.setMaximum(100);
     minSlider.setValue(document.getElementById("minMag").innerHTML * 10);
     minSlider.onchange = function () {
@@ -60,7 +60,7 @@ function createSliders() {
         }
     };
 
-    maxSlider.setMinimum(1);
+    maxSlider.setMinimum(20);
     maxSlider.setMaximum(100);
     maxSlider.setValue(document.getElementById("maxMag").innerHTML * 10);
     maxSlider.onchange = function () {
@@ -173,19 +173,29 @@ function startVis() {
     limit = Math.min(document.getElementById("maxResults").value, 1000);
     var url = encodeURIComponent('http://comcat.cr.usgs.gov/fdsnws/event/1/query?' + startDate + endDate + 'minmagnitude=' + minMagn + '&maxmagnitude=' + maxMagn + '&limit=' + limit + '&format=geojson');
 
-    $.getJSON('proxy.php?url=' + url, function (data) {
-        gData = data;
-        count = data.features.length;
-        if (count > 0) {
-            spacing = width / count;
-            createSVG(data);
-            console.log('Number of results: ' + data.features.length);
+    $.getJSON('proxy.php?url=' + url, function (data, textStatus) {
+        if (textStatus === 'success' && data !== null) {
+            gData = data;
+            count = data.features.length;
+            if (count > 0) {
+                spacing = width / count;
+                createSVG(data);
+                console.log('Number of results: ' + data.features.length);
+            } else {
+                spinner.stop();
+                alert('Your requested query has zero results. Change the options and try again.');
+                
+            }
         } else {
-            alert('Your requested query has zero results. Change the options and try again.');
             spinner.stop();
+            alert('Your request failed try again.');
         }
-
-    });
+    }).fail(function( jqxhr, textStatus, error ) {
+        var err = textStatus + ', ' + error;
+        console.log( "Request Failed: " + err);
+        spinner.stop();
+        alert('Your request failed try again.');
+});
 
 
 }
@@ -201,7 +211,7 @@ function createSVG(data) {
             currentY1 = height / 2,
             currentY2 = height / 2,
             magnMult,
-            mult = 80; //(10 - minMagn)*(15);
+            mult = minMagn * 2; //(10 - minMagn)*(15);
         
         
     
@@ -213,11 +223,11 @@ function createSVG(data) {
                 place = data.features[index].properties.place,
                 time = data.features[index].properties.time;
             
-            if (minMagn < 1) {
-                magnMult = Math.round((magn - minMagn) * mult);
-            } else {
-                magnMult = Math.round((magn - (minMagn - 1)) * mult);
-            }
+            //if (minMagn < 1) {
+            //    magnMult = Math.round((magn - minMagn) * magn*mult);
+            //} else {
+                magnMult = Math.round((magn - (minMagn - 1)) * magn * mult);
+            //}
             
             
             
@@ -291,9 +301,11 @@ function drawSegments(pathTop, pathBottom) {
             
         }
         
-        popUpRect.remove();
-        popUpTxt.remove();
-        popUpTxt = null;
+        if(popUpTxt !== null){
+            popUpRect.remove();
+            popUpTxt.remove();
+            popUpTxt = null;
+        }
     }
     
     
